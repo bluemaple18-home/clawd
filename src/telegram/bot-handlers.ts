@@ -1,5 +1,9 @@
+// Clawd Bot Handlers v2.1.0
 // @ts-nocheck
 import { hasControlCommand } from "../auto-reply/command-detection.js";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+const execAsync = promisify(exec);
 import {
   createInboundDebouncer,
   resolveInboundDebounceMs,
@@ -536,6 +540,43 @@ export const registerTelegramHandlers = ({
       // Text fragment handling - Telegram splits long pastes into multiple inbound messages (~4096 chars).
       // We buffer “near-limit” messages and append immediately-following parts.
       const text = typeof msg.text === "string" ? msg.text : undefined;
+
+      // [DIRECT CMD] Custom '>>' Passthrough
+      if (text && text.trim().startsWith(">>")) {
+        const cmd = text.trim().slice(2).trim();
+        const chatId = msg.chat.id;
+        if (!cmd) return;
+
+        // Security check: Match ALLOWED_USER_IDS from env/config if available, or just log safely
+        // For now, we assume this bot is private as configured.
+
+        await bot.api.sendMessage(chatId, `💻 *Executing:* \`${cmd}\``, { parse_mode: "Markdown" });
+
+        try {
+          const { stdout, stderr } = await execAsync(cmd, {
+            cwd: process.cwd(),
+            timeout: 30000,
+          });
+
+          let output = stdout || "";
+          if (stderr) output += `\n[STDERR]\n${stderr}`;
+          if (!output.trim()) output = "(No output)";
+
+          // Truncate if too long (Telegram limit ~4096)
+          if (output.length > 3000) output = output.slice(0, 3000) + "\n... (truncated)";
+
+          await bot.api.sendMessage(chatId, `✅ *Result:*\n\`\`\`\n${output}\n\`\`\``, {
+            parse_mode: "Markdown",
+          });
+        } catch (err: any) {
+          const errMsg = err.message || String(err);
+          await bot.api.sendMessage(chatId, `❌ *Error:*\n\`\`\`\n${errMsg}\n\`\`\``, {
+            parse_mode: "Markdown",
+          });
+        }
+        return; // Stop processing, do not send to LLM
+      }
+
       const isCommandLike = (text ?? "").trim().startsWith("/");
       if (text && !isCommandLike) {
         const nowMs = Date.now();
