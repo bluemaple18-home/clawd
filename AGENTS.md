@@ -1,3 +1,24 @@
+# 使用者偏好與開發規則 (User Preferences)
+
+## 語言設定
+- **預設語言**：繁體中文 (Traditional Chinese, Taiwan)。
+- **範圍**：
+  - Agent 回應與思考過程 (Thinking Process)。
+  - 文件撰寫 (README, CLAUDE.md, commit messages)。
+  - 任務文件 (implementation_plan, task.md, walkthrough.md)。
+- **程式碼**：保留原始英文語法，但**註解、Docstring 與說明文件**必須使用繁體中文。
+- **英文輸出**：僅在收到「請用英文」指令時才輸出英文。
+
+## 開發環境與工具
+- **Python 開發**：
+  - **必須使用** `uv` 與 `.venv` 建立虛擬環境。
+  - **禁止** 使用系統 base 環境或是直接使用 `pip` (避免汙染環境)。
+- **Git 規範**：
+  - Commit Messages 必須使用**繁體中文**。
+
+## 協作心態
+- 把用戶視為「自學的 PM」而非純工程師，多主動提醒觀念與下一步驟。
+
 # Repository Guidelines
 - Repo: https://github.com/clawdbot/clawdbot
 - GitHub issues/comments/PR comments: use literal multiline strings or `-F - <<'EOF'` (or $'...') for real newlines; never embed "\\n".
